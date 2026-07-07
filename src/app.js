@@ -3,6 +3,8 @@ import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
 
+import categoryRoutes from "./routes/category.routes.js";
+
 dotenv.config();
 
 const app = express();
@@ -17,5 +19,5 @@ app.get("/", (req, res) => {
     message: "Lubrix Backend is Running ",
   });
 });
-
+app.use("/api/categories", categoryRoutes);
 export default app;
