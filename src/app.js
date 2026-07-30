@@ -3,7 +3,7 @@ import cors from "cors";
 import morgan from "morgan";
 import dotenv from "dotenv";
 
-import categoryRoutes from "./routes/category.routes.js";
+import productRoutes from "./routes/product.routes.js";
 
 dotenv.config();
 
@@ -13,11 +13,6 @@ app.use(cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
-app.get("/", (req, res) => {
-  res.json({
-    success: true,
-    message: "Lubrix Backend is Running ",
-  });
-});
-app.use("/api/categories", categoryRoutes);
+  app.use("/api/products",productRoutes)
+  
 export default app;
