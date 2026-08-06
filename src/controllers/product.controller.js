@@ -75,12 +75,17 @@ export const createProduct = async (req, res) => {
     }
 };
 
-export const updateProduct = async(req,res)=>{
-    
-try{
+export const updateProduct = async (req, res) => {
+    const {id} = req.params;
+    const {subcategory_id, name, slug, description, standard, viscosity} = req.body;
+    try {
+            const [existingProducts] = await pool.query(
+                'SELECT * WHERE id = ?'
+            )
 
-}catch(err){
-    console.log("Product updation failed")
-    res.status(500).json({Message:"Failed to updateProduct", success:false})
-}
+        res.status(200).json({ Message: "Product updated successfully", success: true});
+    } catch (err) {
+        console.log("Product updation failed")
+        res.status(500).json({ Message: "Failed to updateProduct", success: false })
+    }
 }
