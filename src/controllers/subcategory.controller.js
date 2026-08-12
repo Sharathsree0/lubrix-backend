@@ -55,15 +55,17 @@ export const createSubcategory = async (req, res) => {
             [category_id]
         );
 
+        const bannerPath = req.file ? `/uploads/subcategories/${req.file.filename}` : null;
+
         const [insertResult] = await pool.query(
-            "INSERT INTO subcategories (category_id, name, slug, display_order) VALUES (?, ?, ?, ?)",
-            [category_id, name, slug, nextOrder]
+            "INSERT INTO subcategories (category_id, name, slug, banner_image, display_order) VALUES (?, ?, ?, ?, ?)",
+            [category_id, name, slug, bannerPath, nextOrder]
         );
 
         res.status(201).json({
             message: "Subcategory added successfully",
             success: true,
-            data: { id: insertResult.insertId, category_id, name, slug, display_order: nextOrder }
+            data: { id: insertResult.insertId, category_id, name, slug, banner_image: bannerPath, display_order: nextOrder }
         });
     } catch (err) {
         console.error("failed to create subcategory", err);
@@ -86,9 +88,16 @@ export const updateSubcategory = async (req, res) => {
             return res.status(409).json({ message: "Subcategory name already exists in this category", success: false });
         }
 
+        const [current] = await pool.query("SELECT banner_image FROM subcategories WHERE id = ?", [id]);
+        if (current.length === 0) {
+            return res.status(404).json({ message: "Subcategory not found", success: false });
+        }
+
+        const bannerPath = req.file ? `/uploads/subcategories/${req.file.filename}` : current[0].banner_image;
+
         const [updateResult] = await pool.query(
-            "UPDATE subcategories SET name = ?, slug = ? WHERE id = ?",
-            [name, slug, id]
+            "UPDATE subcategories SET name = ?, slug = ?, banner_image = ? WHERE id = ?",
+            [name, slug, bannerPath, id]
         );
 
         if (updateResult.affectedRows === 0) {

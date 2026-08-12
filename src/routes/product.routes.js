@@ -1,12 +1,16 @@
 import express from "express";
 import { getProducts, getProductById, createProduct, updateProduct, deleteProduct, reorderProducts } from "../controllers/product.controller.js";
+import requireAdmin from "../middleware/auth.js";
+import { uploadDatasheet } from "../middleware/createUploader.js";
 
 const router = express.Router()
 
-router.get("/", getProducts)
-router.get("/:id", getProductById);
-router.post("/", createProduct);
-router.put("/:id", updateProduct)
-router.delete("/:id", deleteProduct);
-router.patch("/reorder", reorderProducts);
+
+router.get("/", getProducts);             
+router.get("/:id", getProductById);        
+router.post("/", requireAdmin, uploadDatasheet.single("datasheet"), createProduct);
+router.put("/:id", requireAdmin, uploadDatasheet.single("datasheet"), updateProduct)    
+router.delete("/:id", requireAdmin, deleteProduct);  
+router.patch("/reorder", requireAdmin, reorderProducts); 
+
 export default router;

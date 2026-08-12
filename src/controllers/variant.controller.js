@@ -4,16 +4,24 @@ import path from "path";
 
 export const getVariants = async (req, res) => {
     const { product_id } = req.query;
-    let query = "SELECT * FROM product_variants WHERE 1=1";
+    let query = `
+        SELECT pv.*, p.name AS product_name 
+        FROM product_variants pv
+        JOIN products p ON pv.product_id = p.id
+        WHERE 1=1
+    `;
     const params = [];
     try {
         if (product_id) {
-            query += " AND product_id = ?";
+            query += " AND pv.product_id = ?";
             params.push(product_id);
         }
-        query += " ORDER BY display_order ASC";
+        query += " ORDER BY pv.display_order ASC";
         const [result] = await pool.query(query, params);
-        res.status(200).json({ message: "successfully fetched variants", data: result, success: true });
+
+        const formatted = result.map(v => ({ ...v, image: v.image_url }));
+
+        res.status(200).json({ message: "successfully fetched variants", data: formatted, success: true });
     } catch (err) {
         console.error("failed to fetch variants", err);
         res.status(500).json({ message: "failed to fetch variants", success: false });
@@ -23,11 +31,18 @@ export const getVariants = async (req, res) => {
 export const getVariantById = async (req, res) => {
     const { id } = req.params;
     try {
-        const [result] = await pool.query("SELECT * FROM product_variants WHERE id = ?", [id]);
+        const [result] = await pool.query(
+            `SELECT pv.*, p.name AS product_name 
+             FROM product_variants pv
+             JOIN products p ON pv.product_id = p.id
+             WHERE pv.id = ?`,
+            [id]
+        );
         if (result.length === 0) {
             return res.status(404).json({ message: "Variant not found", success: false });
         }
-        res.status(200).json({ message: "Variant found successfully", data: result[0], success: true });
+        const variant = { ...result[0], image: result[0].image_url };
+        res.status(200).json({ message: "Variant found successfully", data: variant, success: true });
     } catch (err) {
         console.error("failed to fetch variant", err);
         res.status(500).json({ message: "failed to fetch variant", success: false });

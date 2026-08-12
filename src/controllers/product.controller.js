@@ -39,35 +39,38 @@ export const getProductById = async (req, res) => {
 }
 
 export const createProduct = async (req, res) => {
+    const { subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications } = req.body;
 
-    const { subcategory_id, name, slug, description, standard, viscosity } = req.body;
-
-    if (!subcategory_id || !name || !slug || slug === null || !description || description === null || !standard || !viscosity) {
-        return res.status(400).json({ Message: "All fields are required", Success: false });
+    if (!subcategory_id || !name || !slug || !description || !standard || !viscosity) {
+        return res.status(400).json({ message: "All fields are required", success: false });
     }
     try {
         const [existingProducts] = await pool.query(
             "SELECT id FROM products WHERE LOWER(name) = LOWER(?) AND subcategory_id = ?",
             [name, subcategory_id]
         );
-
         if (existingProducts.length > 0) {
-            return res.status(409).json({ Message: "Product already exists", Success: false });
+            return res.status(409).json({ message: "Product already exists", success: false });
         }
+
         const [[{ nextOrder }]] = await pool.query(
             "SELECT COALESCE(MAX(display_order), -1) + 1 AS nextOrder FROM products WHERE subcategory_id = ?",
             [subcategory_id]
         );
 
+        const pdfPath = req.file ? `/uploads/datasheets/${req.file.filename}` : null;
+
         const [insertResult] = await pool.query(
-            "INSERT INTO products (subcategory_id, name, slug, description, standard, viscosity, display_order) VALUES (?, ?, ?, ?, ?, ?, ?)",
-            [subcategory_id, name, slug, description, standard, viscosity, nextOrder]
+            `INSERT INTO products 
+             (subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications, pdf_url, display_order) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+            [subcategory_id, name, slug, description, standard, viscosity, oil_type || null, features || null, applications || null, pdfPath, nextOrder]
         );
 
         res.status(201).json({
             message: "Product added successfully",
             success: true,
-            data: { id: insertResult.insertId, subcategory_id, name, slug, description, standard, viscosity, display_order: nextOrder }
+            data: { id: insertResult.insertId, subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications, pdf_url: pdfPath, display_order: nextOrder }
         });
     } catch (err) {
         console.error("failed to create product", err);
@@ -77,33 +80,43 @@ export const createProduct = async (req, res) => {
 
 export const updateProduct = async (req, res) => {
     const { id } = req.params;
-    const { subcategory_id, name, slug, description, standard, viscosity } = req.body;
-    if (!subcategory_id || !name || !slug || !description || !standard || !viscosity) {
-        return res.status(400).json({ Message: "All fields are required", success: false });
-    }
-    try {
+    const { subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications } = req.body;
 
+    if (!subcategory_id || !name || !slug || !description || !standard || !viscosity) {
+        return res.status(400).json({ message: "All fields are required", success: false });
+    }
+
+    try {
         const [existingProducts] = await pool.query(
-            'SELECT id FROM products WHERE LOWER(name) = LOWER(?) AND subcategory_id = ? AND id != ?',
+            "SELECT id FROM products WHERE LOWER(name) = LOWER(?) AND subcategory_id = ? AND id != ?",
             [name, subcategory_id, id]
         );
         if (existingProducts.length > 0) {
-            return res.status(409).json({ Message: "Product name already exists in this subcategory", success: false });
+            return res.status(409).json({ message: "Product name already exists in this subcategory", success: false });
         }
 
+        const [current] = await pool.query("SELECT pdf_url FROM products WHERE id = ?", [id]);
+        if (current.length === 0) {
+            return res.status(404).json({ message: "Product not found", success: false });
+        }
+
+        const pdfPath = req.file ? `/uploads/datasheets/${req.file.filename}` : current[0].pdf_url;
+
         const [updateResult] = await pool.query(
-            "UPDATE products SET name = ?, slug = ?, description = ?, standard = ?, viscosity = ? WHERE id = ?",
-            [name, slug, description, standard, viscosity, id]
+            `UPDATE products 
+             SET name = ?, slug = ?, description = ?, standard = ?, viscosity = ?, oil_type = ?, features = ?, applications = ?, pdf_url = ? 
+             WHERE id = ?`,
+            [name, slug, description, standard, viscosity, oil_type || null, features || null, applications || null, pdfPath, id]
         );
 
         if (updateResult.affectedRows === 0) {
-            return res.status(404).json({ Message: "Product not found", success: false });
+            return res.status(404).json({ message: "Product not found", success: false });
         }
 
-        res.status(200).json({ Message: "Product updated successfully", success: true });
+        res.status(200).json({ message: "Product updated successfully", success: true });
     } catch (err) {
-        console.log("Product updation failed", err);
-        res.status(500).json({ Message: "Failed to update product", success: false });
+        console.error("failed to update product", err);
+        res.status(500).json({ message: "failed to update product", success: false });
     }
 };
 
