@@ -2,13 +2,13 @@ import pool from "./src/config/db.js"
 import app from "./src/app.js"
 import { configDotenv } from "dotenv";
 
-const PORT = process.env.PORT
+const PORT = process.env.PORT || 5000
 const startServer=async()=>{
 let connection;
 try{
     connection = await pool.getConnection()
     console.log("MYSQL Database connected succesfully")
-    app.listen(PORT,()=>{console.log(`Server is running in at ${PORT} `)})
+    app.listen(PORT,'0.0.0.0', ()=>{console.log(`Server is running in at ${PORT} `)})
 }catch (err){
     console.error("Server connection failed ", err)
 }
