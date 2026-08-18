@@ -2,14 +2,14 @@ import pool from "../config/db.js";
 
 export const getCategories = async (req, res) => {
     const { search } = req.query;
-    let query = "SELECT * FROM categories WHERE 1=1";
+    let query = "SELECT c.*, g.name AS group_name FROM categories c JOIN groups g ON c.group_id = g.id WHERE 1=1";
     const params = [];
     try {
         if (search) {
-            query += " AND name LIKE ?";
+            query += " AND c.name LIKE ?";
             params.push(`%${search}%`);
         }
-        query += " ORDER BY display_order ASC";
+        query += " ORDER BY c.display_order ASC";
         const [result] = await pool.query(query, params);
         res.status(200).json({ message: "successfully fetched categories", data: result, success: true });
     } catch (err) {
@@ -21,7 +21,10 @@ export const getCategories = async (req, res) => {
 export const getCategoryById = async (req, res) => {
     const { id } = req.params;
     try {
-        const [result] = await pool.query("SELECT * FROM categories WHERE id = ?", [id]);
+        const [result] = await pool.query(
+            "SELECT c.*, g.name AS group_name FROM categories c JOIN groups g ON c.group_id = g.id WHERE c.id = ?",
+            [id]
+        );
         if (result.length === 0) {
             return res.status(404).json({ message: "Category not found", success: false });
         }
@@ -33,32 +36,33 @@ export const getCategoryById = async (req, res) => {
 };
 
 export const createCategory = async (req, res) => {
-    const { name, slug } = req.body;
-    if (!name || !slug) {
+    const { name, slug, group_id } = req.body;
+    if (!name || !slug || !group_id) {
         return res.status(400).json({ message: "All fields are required", success: false });
     }
     try {
         const [existing] = await pool.query(
-            "SELECT id FROM categories WHERE LOWER(name) = LOWER(?)",
-            [name]
+            "SELECT id FROM categories WHERE LOWER(name) = LOWER(?) AND group_id = ?",
+            [name, group_id]
         );
         if (existing.length > 0) {
             return res.status(409).json({ message: "Category already exists", success: false });
         }
 
         const [[{ nextOrder }]] = await pool.query(
-            "SELECT COALESCE(MAX(display_order), -1) + 1 AS nextOrder FROM categories"
+            "SELECT COALESCE(MAX(display_order), -1) + 1 AS nextOrder FROM categories WHERE group_id = ?",
+            [group_id]
         );
 
         const [insertResult] = await pool.query(
-            "INSERT INTO categories (name, slug, display_order) VALUES (?, ?, ?)",
-            [name, slug, nextOrder]
+            "INSERT INTO categories (name, slug, group_id, display_order) VALUES (?, ?, ?, ?)",
+            [name, slug, group_id, nextOrder]
         );
 
         res.status(201).json({
             message: "Category added successfully",
             success: true,
-            data: { id: insertResult.insertId, name, slug, display_order: nextOrder }
+            data: { id: insertResult.insertId, name, slug, group_id, display_order: nextOrder }
         });
     } catch (err) {
         console.error("failed to create category", err);
@@ -68,22 +72,22 @@ export const createCategory = async (req, res) => {
 
 export const updateCategory = async (req, res) => {
     const { id } = req.params;
-    const { name, slug } = req.body;
-    if (!name || !slug) {
+    const { name, slug, group_id } = req.body;
+    if (!name || !slug || !group_id) {
         return res.status(400).json({ message: "All fields are required", success: false });
     }
     try {
         const [existing] = await pool.query(
-            "SELECT id FROM categories WHERE LOWER(name) = LOWER(?) AND id != ?",
-            [name, id]
+            "SELECT id FROM categories WHERE LOWER(name) = LOWER(?) AND group_id = ? AND id != ?",
+            [name, group_id, id]
         );
         if (existing.length > 0) {
-            return res.status(409).json({ message: "Category name already exists", success: false });
+            return res.status(409).json({ message: "Category name already exists in this group", success: false });
         }
 
         const [updateResult] = await pool.query(
-            "UPDATE categories SET name = ?, slug = ? WHERE id = ?",
-            [name, slug, id]
+            "UPDATE categories SET name = ?, slug = ?, group_id = ? WHERE id = ?",
+            [name, slug, group_id, id]
         );
 
         if (updateResult.affectedRows === 0) {

@@ -10,6 +10,10 @@ import variantRoutes from "./routes/variant.routes.js";
 import specificationRoutes from "./routes/specification.routes.js";
 import navRoutes from "./routes/nav.routes.js";
 import authRoutes from "./routes/auth.routes.js";
+import groupRoutes from "./routes/group.routes.js";
+import settingsRoutes from "./routes/settings.routes.js"
+import slideRoutes from "./routes/slide.routes.js"
+import teamRoutes from "./routes/team.routes.js"
 
 dotenv.config();
 
@@ -29,6 +33,10 @@ app.use("/uploads", express.static("public/uploads"));
   app.use("/api/categories", categoryRoutes);
   app.use("/api/variants", variantRoutes);
   app.use("/api/specifications", specificationRoutes);
+  app.use("/api/groups", groupRoutes);
   app.use("/api/nav", navRoutes);
   app.use("/api/auth", authRoutes);
+  app.use("/api/settings", settingsRoutes);
+  app.use("/api/slides", slideRoutes);
+  app.use("/api/team", teamRoutes);
 export default app;

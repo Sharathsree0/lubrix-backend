@@ -1,12 +1,6 @@
 import express from "express";
 import requireAdmin from "../middleware/auth.js";
-import {
-    getSpecifications,
-    createSpecification,
-    updateSpecification,
-    deleteSpecification,
-    reorderSpecifications
-} from "../controllers/specificationController.js";
+import {    getSpecifications,    createSpecification,    updateSpecification,    deleteSpecification,    reorderSpecifications} from "../controllers/specificationController.js";
 
 const router = express.Router();
 

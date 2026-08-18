@@ -16,9 +16,10 @@ export const getSpecifications = async (req, res) => {
         res.status(500).json({ message: "failed to fetch specifications", success: false });
     }
 };
-
+    // ...
+    
 export const createSpecification = async (req, res) => {
-    const { product_id, test_parameter, test_method, typical_value } = req.body;
+ const { product_id, test_parameter, test_method, typical_value, is_header_row } = req.body;
     if (!product_id || !test_parameter) {
         return res.status(400).json({ message: "product_id and test_parameter are required", success: false });
     }
@@ -28,10 +29,10 @@ export const createSpecification = async (req, res) => {
             [product_id]
         );
 
-        const [insertResult] = await pool.query(
-            "INSERT INTO product_specifications (product_id, test_parameter, test_method, typical_value, display_order) VALUES (?, ?, ?, ?, ?)",
-            [product_id, test_parameter, test_method || null, typical_value || null, nextOrder]
-        );
+       const [insertResult] = await pool.query(
+        "INSERT INTO product_specifications (product_id, test_parameter, test_method, typical_value, is_header_row, display_order) VALUES (?, ?, ?, ?, ?, ?)",
+        [product_id, test_parameter, test_method || null, typical_value || null, is_header_row ? 1 : 0, nextOrder]
+    );
 
         res.status(201).json({
             message: "Specification added successfully",
@@ -43,18 +44,20 @@ export const createSpecification = async (req, res) => {
         res.status(500).json({ message: "failed to create specification", success: false });
     }
 };
-
+    // ...
+    
 export const updateSpecification = async (req, res) => {
     const { id } = req.params;
-    const { test_parameter, test_method, typical_value } = req.body;
+ const { test_parameter, test_method, typical_value, is_header_row } = req.body;
     if (!test_parameter) {
         return res.status(400).json({ message: "test_parameter is required", success: false });
     }
     try {
         const [updateResult] = await pool.query(
-            "UPDATE product_specifications SET test_parameter = ?, test_method = ?, typical_value = ? WHERE id = ?",
-            [test_parameter, test_method || null, typical_value || null, id]
-        );
+        "UPDATE product_specifications SET test_parameter = ?, test_method = ?, typical_value = ?, is_header_row = ? WHERE id = ?",
+        [test_parameter, test_method || null, typical_value || null, is_header_row ? 1 : 0, id]
+    );
+    
         if (updateResult.affectedRows === 0) {
             return res.status(404).json({ message: "Specification not found", success: false });
         }

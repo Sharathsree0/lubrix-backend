@@ -1,0 +1,11 @@
+import express from "express";
+import { createUploader } from "../middleware/createUploader.js";
+import requireAdmin from "../middleware/auth.js";
+import { getSlides, createSlide, deleteSlide, reorderSlides } from "../controllers/slideController.js";
+const uploadSlide = createUploader("slides", [".jpg", ".jpeg", ".png", ".webp"]);
+const router = express.Router();
+router.get("/", getSlides);
+router.post("/", requireAdmin, uploadSlide.single("image"), createSlide);
+router.delete("/:id", requireAdmin, deleteSlide);
+router.patch("/reorder", requireAdmin, reorderSlides);
+export default router;

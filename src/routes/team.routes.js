@@ -1,0 +1,12 @@
+import express from "express";
+import { createUploader } from "../middleware/createUploader.js";
+import requireAdmin from "../middleware/auth.js";
+import { getTeamMembers, createTeamMember, updateTeamMember, deleteTeamMember, reorderTeamMembers } from "../controllers/teamController.js";
+const uploadPhoto = createUploader("team", [".jpg", ".jpeg", ".png", ".webp"]);
+const router = express.Router();
+router.get("/", getTeamMembers);
+router.post("/", requireAdmin, uploadPhoto.single("photo"), createTeamMember);
+router.put("/:id", requireAdmin, uploadPhoto.single("photo"), updateTeamMember);
+router.delete("/:id", requireAdmin, deleteTeamMember);
+router.patch("/reorder", requireAdmin, reorderTeamMembers);
+export default router;

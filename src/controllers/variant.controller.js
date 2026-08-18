@@ -50,9 +50,9 @@ export const getVariantById = async (req, res) => {
 };
 
 export const createVariant = async (req, res) => {
-    const { product_id, quantity_label, price } = req.body;
+    const { product_id, quantity_label } = req.body;
 
-    if (!product_id || !quantity_label || !price) {
+    if (!product_id || !quantity_label) {
         return res.status(400).json({ message: "All fields required", success: false });
     }
     if (!req.file) {
@@ -68,8 +68,8 @@ export const createVariant = async (req, res) => {
         );
 
         const [insertResult] = await pool.query(
-            "INSERT INTO product_variants (product_id, quantity_label, image_url, price, display_order) VALUES (?, ?, ?, ?, ?)",
-            [product_id, quantity_label, imagePath, price, nextOrder]
+            "INSERT INTO product_variants (product_id, quantity_label, image_url, display_order) VALUES (?, ?, ?, ?)",
+            [product_id, quantity_label, imagePath, nextOrder]
         );
 
         res.status(201).json({
@@ -80,7 +80,6 @@ export const createVariant = async (req, res) => {
                 product_id,
                 quantity_label,
                 image_url: imagePath,
-                price,
                 display_order: nextOrder
             }
         });
@@ -92,9 +91,9 @@ export const createVariant = async (req, res) => {
 
 export const updateVariant = async (req, res) => {
     const { id } = req.params;
-    const { quantity_label, price } = req.body;
+    const { quantity_label } = req.body;
 
-    if (!quantity_label || !price) {
+    if (!quantity_label) {
         return res.status(400).json({ message: "All fields required", success: false });
     }
 
@@ -115,11 +114,11 @@ export const updateVariant = async (req, res) => {
         }
 
         await pool.query(
-            "UPDATE product_variants SET quantity_label = ?, price = ?, image_url = ? WHERE id = ?",
-            [quantity_label, price, imagePath, id]
+            "UPDATE product_variants SET quantity_label = ?, image_url = ? WHERE id = ?",
+            [quantity_label, imagePath, id]
         );
 
-        res.status(200).json({ message: "Variant updated successfully", success: true, data: { id, quantity_label, price, image_url: imagePath } });
+        res.status(200).json({ message: "Variant updated successfully", success: true, data: { id, quantity_label, image_url: imagePath } });
     } catch (err) {
         console.error("failed to update variant", err);
         res.status(500).json({ message: "failed to update variant", success: false });
