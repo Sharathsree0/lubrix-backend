@@ -64,8 +64,8 @@ export const createProduct = async (req, res) => {
 
         const [insertResult] = await pool.query(
             `INSERT INTO products 
-     (subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications, badges,spec_col1_label, spec_col2_label, spec_col3_label, recommendations, pdf_url, display_order) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+             (subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications, badges,spec_col1_label, spec_col2_label, spec_col3_label, recommendations, pdf_url, display_order) 
+             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`, // <- 16 question marks here
             [subcategory_id, name, slug, description, standard || null, viscosity || null, oil_type || null, features || null, applications || null, badges || null, spec_col1_label || null, spec_col2_label || null, spec_col3_label || null, recommendations || null, pdfPath, nextOrder]
         );
 
@@ -84,7 +84,7 @@ export const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications, badges, spec_col1_label, spec_col2_label, spec_col3_label, recommendations, } = req.body;
 
-    if (!subcategory_id || !name || !slug || !description || !standard || !viscosity) {
+    if (!subcategory_id || !name  || !description ) {
         return res.status(400).json({ message: "All fields are required", success: false });
     }
 
@@ -104,11 +104,11 @@ export const updateProduct = async (req, res) => {
 
         const pdfPath = req.file ? `/uploads/datasheets/${req.file.filename}` : current[0].pdf_url;
 
-        const [insertResult] = await pool.query(
-            `INSERT INTO products 
-     (subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications, badges,spec_col1_label, spec_col2_label, spec_col3_label, recommendations, pdf_url, display_order) 
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-            [subcategory_id, name, slug, description, standard || null, viscosity || null, oil_type || null, features || null, applications || null, badges || null, spec_col1_label || null, spec_col2_label || null, spec_col3_label || null, recommendations || null, pdfPath, nextOrder]
+        const [updateResult] = await pool.query(
+            `UPDATE products SET 
+             subcategory_id = ?, name = ?, slug = ?, description = ?, standard = ?, viscosity = ?, oil_type = ?, features = ?, applications = ?, badges = ?, spec_col1_label = ?, spec_col2_label = ?, spec_col3_label = ?, recommendations = ?, pdf_url = ? 
+             WHERE id = ?`,
+            [subcategory_id, name, slug, description, standard || null, viscosity || null, oil_type || null, features || null, applications || null, badges || null, spec_col1_label || null, spec_col2_label || null, spec_col3_label || null, recommendations || null, pdfPath, id]
         );
 
         if (updateResult.affectedRows === 0) {
