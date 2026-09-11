@@ -84,7 +84,7 @@ export const updateProduct = async (req, res) => {
     const { id } = req.params;
     const { subcategory_id, name, slug, description, standard, viscosity, oil_type, features, applications, badges, spec_col1_label, spec_col2_label, spec_col3_label, recommendations, } = req.body;
 
-    if (!subcategory_id || !name  || !description ) {
+    if (!subcategory_id || !name  || !description   ) {
         return res.status(400).json({ message: "All fields are required", success: false });
     }
 
